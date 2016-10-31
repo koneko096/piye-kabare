@@ -1,53 +1,62 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- * @flow
- */
+'use strict';
 
 import React, { Component } from 'react';
 import {
   AppRegistry,
+  BackAndroid,
+  Navigator,
   StyleSheet,
-  Text,
   View
 } from 'react-native';
 
-export default class PiyeKabare extends Component {
+var Home = require('./Home');
+var Example = require('./Example');
+
+var styles = StyleSheet.create({
+  container: {
+    flex: 1
+  }
+});
+
+class PiyeKabareApp extends Component {
+  constructor(props) { 
+    super(props);
+    this.navigator = null;
+  }
+
+  onBack() {
+    if (this.navigator && this.navigator.getCurrentRoutes().length > 1) {
+      this.navigator.pop();
+      return true;
+    }
+    return false;
+  }
+
+  componentWillMount() {
+    BackAndroid.addEventListener('hardwareBackPress', this.onBack.bind(this));
+  }
+
+  navRender(route, navigator) {
+    this.navigator = navigator;
+    let RouteComponent = route.component;
+    return (
+      <RouteComponent 
+        navigator={navigator}              
+        {...route.passProps} />
+    );
+  }
+
   render() {
     return (
-      <View style={styles.container}>
-        <Text style={styles.welcome}>
-          Welcome to React Native!
-        </Text>
-        <Text style={styles.instructions}>
-          To get started, edit index.android.js
-        </Text>
-        <Text style={styles.instructions}>
-          Double tap R on your keyboard to reload,{'\n'}
-          Shake or press menu button for dev menu
-        </Text>
-      </View>
+      <Navigator
+        style={styles.container}       
+        renderScene={this.navRender.bind(this)}
+        initialRoute={{
+          title: 'Piye Kabare',
+          component: Example
+        }}/>
     );
   }
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5FCFF',
-  },
-  welcome: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
-  },
-  instructions: {
-    textAlign: 'center',
-    color: '#333333',
-    marginBottom: 5,
-  },
-});
-
-AppRegistry.registerComponent('PiyeKabare', () => PiyeKabare);
+AppRegistry.registerComponent('PiyeKabare', () => PiyeKabareApp);
