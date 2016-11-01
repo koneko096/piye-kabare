@@ -9,8 +9,9 @@ import {
   View
 } from 'react-native';
 
-var Home = require('./Home');
-var Example = require('./Example');
+import Home from './Home';
+import Login from './Login';
+import Dashboard from './Dashboard';
 
 var styles = StyleSheet.create({
   container: {
@@ -53,7 +54,7 @@ class PiyeKabareApp extends Component {
         renderScene={this.navRender.bind(this)}
         initialRoute={{
           title: 'Piye Kabare',
-          component: Example
+          component: Dashboard
         }}/>
     );
   }

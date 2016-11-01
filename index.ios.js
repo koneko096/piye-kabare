@@ -7,7 +7,7 @@ import {
   NavigatorIOS
 } from 'react-native';
 
-var Home = require('./Home');
+import Home from './Home';
 
 var styles = StyleSheet.create({
   container: {
