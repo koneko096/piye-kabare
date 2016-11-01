@@ -5,8 +5,7 @@ import Row from './Row';
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    marginTop: 20,
+    flex: 1
   },
 });
 
@@ -19,12 +18,18 @@ export default class ContentList extends Component {
     };
   }
 
+  onClick() {
+    this.props.onClick();
+  }
+
   render() {
     return (
       <ListView
         style={styles.container}
         dataSource={this.state.dataSource}
-        renderRow={(data) => <Row {...data} />}
+        renderRow={(data) => 
+          <Row onClick={this.onClick.bind(this)} {...data} />
+        }
       />
     );
   }

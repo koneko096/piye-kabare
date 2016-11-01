@@ -9,13 +9,12 @@ import {
   View
 } from 'react-native';
 
-import Home from './Home';
-import Login from './Login';
-import Dashboard from './Dashboard';
+import Home from './app/component/Home';
 
 var styles = StyleSheet.create({
   container: {
-    flex: 1
+    flex: 1,
+    backgroundColor: 'white',
   }
 });
 
@@ -54,7 +53,7 @@ class PiyeKabareApp extends Component {
         renderScene={this.navRender.bind(this)}
         initialRoute={{
           title: 'Piye Kabare',
-          component: Dashboard
+          component: Home
         }}/>
     );
   }

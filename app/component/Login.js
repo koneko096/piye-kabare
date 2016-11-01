@@ -10,55 +10,9 @@ import {
   View
 } from 'react-native';
 
-var styles = StyleSheet.create({
-  description: {
-    marginBottom: 20,
-    fontSize: 18,
-    textAlign: 'center',
-    color: '#656565'
-  },
-  container: {
-    backgroundColor: 'white',
-    padding: 30,
-    marginTop: 65,
-    alignItems: 'center'
-  },
-  buttonText: {
-    fontSize: 18,
-    color: 'white',
-    alignSelf: 'center'
-  },
-  button: {
-    height: 36,
-    flex: 1,
-    flexDirection: 'row',
-    backgroundColor: '#48BBEC',
-    borderColor: '#48BBEC',
-    borderWidth: 1,
-    borderRadius: 8,
-    marginBottom: 10,
-    alignSelf: 'stretch',
-    justifyContent: 'center'
-  },
-  textInput: {
-    height: 36,
-    padding: 4,
-    flexDirection: 'row',
-    flex: 1,
-    fontSize: 18,
-    borderWidth: 1,
-    borderColor: '#48BBEC',
-    borderRadius: 8,
-    alignSelf: 'stretch',
-    justifyContent: 'center',
-    color: '#48BBEC'
-  },
-  loading: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 8
-  }
-});
+import Register from './Register';
+
+import styles from '../style/FormStyles';
 
 export default class Login extends Component {
   constructor(props) {
@@ -66,6 +20,7 @@ export default class Login extends Component {
     this.state = {
       uname: '',
       pass: '',
+      loggedIn: this.props.loggedIn,
       isLoading: false,
       message: ''
     };
@@ -74,10 +29,27 @@ export default class Login extends Component {
   onLogin() {
     // var socket = this.props.socket;
     // socket.emit('login', {uname: this.state.uname, pass: this.state.pass});
-    this.setState({ isLoading: true });
+    this.setState({ isLoading: true, loggedIn: true });
     // socket.on('login_status', function (userData) {
     //   this.setState({ message: JSON.stringify(userData) });
     // });
+  }
+
+  justLoggedIn() {
+    this.setState({ loggedIn: true });
+  }
+
+  componentWillUpdate(nextProps, nextState) {
+    if (nextState.loggedIn)
+      this.props.justLoggedIn();
+  }
+
+  onRegister() {
+    this.props.navigator.push({
+      title: 'Register',
+      component: Register,
+      passProps: {justLoggedIn: this.justLoggedIn.bind(this)}
+    });
   }
 
   onUsernameChanged(ev) {
@@ -115,6 +87,11 @@ export default class Login extends Component {
               onPress={this.onLogin.bind(this)}
               underlayColor='#99d9f4'>
             <Text style={styles.buttonText}>Login</Text>
+          </TouchableHighlight>
+          <TouchableHighlight style={styles.button}
+              onPress={this.onRegister.bind(this)}
+              underlayColor='#1219FF'>
+            <Text style={styles.buttonText}>Register</Text>
           </TouchableHighlight>
           <Text style={styles.description}>{this.state.message}</Text>
         </View>
