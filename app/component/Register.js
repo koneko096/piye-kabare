@@ -15,30 +15,66 @@ import styles from '../style/FormStyles';
 export default class Register extends Component {
   constructor(props) {
     super(props);
+    this.socket = this.props.socket;
     this.state = {
       name: '',
       uname: '',
       pass: '',
       pass2: '',
-      loggedIn: this.props.loggedIn,
+      loggedIn: false,
       isLoading: false,
       message: ''
     };
   }
 
-  onRegister() {
-    // var socket = this.props.socket;
-    // socket.emit('login', {uname: this.state.uname, pass: this.state.pass});
-    this.setState({ isLoading: true, loggedIn: true });
-    // socket.on('login_status', function (userData) {
-    //   this.setState({ message: JSON.stringify(userData) });
-    // });
-    this.props.navigator.pop();
+  clearForm() {
+    this.setState({
+      name: '',
+      uname: '',
+      pass: '',
+      pass2: ''
+    });
   }
 
-  componentWillUpdate(nextProps, nextState) {
-    if (nextState.loggedIn)
-      this.props.justLoggedIn();
+  registerResp(resp) {
+    switch (resp) {
+      case 300:
+        this.clearForm();
+        this.setState({message: 'Username not available', isLoading: false});
+        break;
+      case 500:
+        this.clearForm();
+        this.setState({message: 'Service error\nPlease try again', isLoading: false});
+        break;
+      case 200:
+        this.setState({message: 'User has been registered\nRedirecting to login page', isLoading: false});
+        setTimeout(() => {
+          this.props.navigator.pop();
+        }, 1000);
+        break;
+    }
+  }
+
+  onRegister() {
+    this.setState({ isLoading: true });
+
+    if (this.state.pass !== this.state.pass2) {
+      this.setState({ isLoading: false, message: 'Password doesn\'t match' })
+      return;
+    }
+
+    this.socket.emit('register', {
+      name: this.state.name, 
+      username: this.state.uname, 
+      password: this.state.pass
+    });
+
+    this.socket.on('register_status', this.registerResp.bind(this));
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (this.state.loggedIn)
+      this.props.justLoggedIn(this.state.userData);
   }
 
   onNameChanged(ev) {
@@ -58,48 +94,50 @@ export default class Register extends Component {
   }
 
   render() {
-    if (this.state.isLoading)
-      return ( 
-        <ActivityIndicator
-          style={styles.loading}
-          size='large'/> 
-      );
-    else
-      return (
-        <View style={styles.container}>
-          <TextInput
-            style={styles.textInput}
-            value={this.state.name}
-            onChange={this.onNameChanged.bind(this)}
-            underlineColorAndroid={'transparent'}
-            placeholder='Full Name'/>
-          <TextInput
-            style={styles.textInput}
-            value={this.state.uname}
-            onChange={this.onUsernameChanged.bind(this)}
-            underlineColorAndroid={'transparent'}
-            placeholder='Username'/>
-          <TextInput
-            secureTextEntry={true}
-            style={styles.textInput}
-            value={this.state.pass}
-            onChange={this.onPasswordChanged.bind(this)}
-            underlineColorAndroid={'transparent'}
-            placeholder='Password'/>
-          <TextInput
-            secureTextEntry={true}
-            style={styles.textInput}
-            value={this.state.pass2}
-            onChange={this.onPassword2Changed.bind(this)}
-            underlineColorAndroid={'transparent'}
-            placeholder='Confirm password'/>
-          <TouchableHighlight style={styles.button}
-              onPress={this.onRegister.bind(this)}
-              underlayColor='#1219FF'>
-            <Text style={styles.buttonText}>Register</Text>
-          </TouchableHighlight>
-          <Text style={styles.description}>{this.state.message}</Text>
-        </View>
-      );
+    const pie = (
+      this.state.isLoading ? 
+      <ActivityIndicator
+        style={styles.loading}
+        size='large'/> :
+      <View/>
+    );
+
+    return (
+      <View style={styles.container}>
+        <TextInput
+          style={styles.textInput}
+          value={this.state.name}
+          onChange={this.onNameChanged.bind(this)}
+          underlineColorAndroid={'transparent'}
+          placeholder='Full Name'/>
+        <TextInput
+          style={styles.textInput}
+          value={this.state.uname}
+          onChange={this.onUsernameChanged.bind(this)}
+          underlineColorAndroid={'transparent'}
+          placeholder='Username'/>
+        <TextInput
+          secureTextEntry={true}
+          style={styles.textInput}
+          value={this.state.pass}
+          onChange={this.onPasswordChanged.bind(this)}
+          underlineColorAndroid={'transparent'}
+          placeholder='Password'/>
+        <TextInput
+          secureTextEntry={true}
+          style={styles.textInput}
+          value={this.state.pass2}
+          onChange={this.onPassword2Changed.bind(this)}
+          underlineColorAndroid={'transparent'}
+          placeholder='Confirm password'/>
+        <TouchableHighlight style={styles.button}
+            onPress={this.onRegister.bind(this)}
+            underlayColor='#1219FF'>
+          <Text style={styles.buttonText}>Register</Text>
+        </TouchableHighlight>
+        {pie}
+        <Text style={styles.description}>{this.state.message}</Text>
+      </View>
+    );
   }
 }

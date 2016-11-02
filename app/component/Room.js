@@ -30,7 +30,6 @@ class Room extends Component {
     super(props);
     this.state = {
       messages: [],
-      loadEarlier: true,
       typingText: null,
       isLoadingEarlier: false,
     };
@@ -40,7 +39,6 @@ class Room extends Component {
     this.onReceive = this.onReceive.bind(this);
     this.renderCustomActions = this.renderCustomActions.bind(this);
     this.renderBubble = this.renderBubble.bind(this);
-    this.renderFooter = this.renderFooter.bind(this);
     this.onLoadEarlier = this.onLoadEarlier.bind(this);
 
     this._isAlright = null;
@@ -48,11 +46,6 @@ class Room extends Component {
 
   componentWillMount() {
     this._isMounted = true;
-    this.setState(() => {
-      return {
-        messages: require('./data/messages.js'),
-      };
-    });
   }
 
   componentWillUnmount() {
@@ -70,7 +63,7 @@ class Room extends Component {
       if (this._isMounted === true) {
         this.setState((previousState) => {
           return {
-            messages: GiftedChat.prepend(previousState.messages, require('./data/old_messages.js')),
+            // messages: GiftedChat.prepend(previousState.messages, require('../data/old_messages.js')),
             loadEarlier: false,
             isLoadingEarlier: false,
           };
@@ -130,12 +123,12 @@ class Room extends Component {
       return {
         messages: GiftedChat.append(previousState.messages, {
           _id: Math.round(Math.random() * 1000000),
-          text: text,
+          text: this.props.roomId,
           createdAt: new Date(),
           user: {
             _id: 2,
             name: 'React Native',
-            // avatar: 'https://facebook.github.io/react/img/logo_og.png',
+            avatar: 'https://facebook.github.io/react/img/logo_og.png',
           },
         }),
       };
@@ -188,25 +181,11 @@ class Room extends Component {
     );
   }
 
-  renderFooter(props) {
-    if (this.state.typingText) {
-      return (
-        <View style={styles.footerContainer}>
-          <Text style={styles.footerText}>
-            {this.state.typingText}
-          </Text>
-        </View>
-      );
-    }
-    return null;
-  }
-
   render() {
     return (
       <GiftedChat
         messages={this.state.messages}
         onSend={this.onSend}
-        loadEarlier={this.state.loadEarlier}
         onLoadEarlier={this.onLoadEarlier}
         isLoadingEarlier={this.state.isLoadingEarlier}
 
@@ -217,7 +196,6 @@ class Room extends Component {
         renderActions={this.renderCustomActions}
         renderBubble={this.renderBubble}
         renderCustomView={this.renderCustomView}
-        renderFooter={this.renderFooter}
       />
     );
   }

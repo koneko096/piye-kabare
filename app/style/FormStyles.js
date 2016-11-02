@@ -45,6 +45,7 @@ export default FormStyles = React.StyleSheet.create({
   loading: {
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 10,
     padding: 8
   }
 });

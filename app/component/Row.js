@@ -7,6 +7,8 @@ import {
   View
 } from 'react-native';
 
+import MaterialInitials from 'react-native-material-initials/native';
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -22,19 +24,25 @@ const styles = StyleSheet.create({
 
 export default class Row extends Component {
   onClick() {
-    // console.log(this.props.id)
-    // console.log(this.props.onClick);
-    this.props.onClick();
+    this.props.onClick(this.props.id);
   }
 
   render() {
     return (
       <TouchableHighlight
-        onPress={this.onClick}
+        onPress={this.onClick.bind(this)}
         underlayColor='#C3C3C3'>
         <View style={styles.container}>
+          <MaterialInitials
+            style={{alignSelf: 'center'}}
+            backgroundColor={'navajowhite'}
+            color={'white'}
+            size={40}
+            text={this.props.name.toUpperCase()}
+            single={false}
+          />
           <Text style={styles.text}>
-            {`${this.props.name}`}
+            {this.props.name}
           </Text>
         </View>
       </TouchableHighlight>  

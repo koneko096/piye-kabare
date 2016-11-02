@@ -15,6 +15,7 @@ import styles from '../style/FormStyles';
 export default class AddFriend extends Component {
   constructor(props) {
     super(props);
+    this.socket = this.props.socket;
     this.state = {
       uname: '',
       isLoading: false,
@@ -26,13 +27,37 @@ export default class AddFriend extends Component {
     this.setState({ uname: ev.nativeEvent.text });
   }
 
+  clearForm() { this.setState({ uname: '' }); }
+
+  addResp(resp) {
+    switch (resp) {
+      case 300:
+        this.clearForm();
+        this.setState({message: 'User had become friend', isLoading: false});
+        break;
+      case 400:
+        this.clearForm();
+        this.setState({message: 'Username not found', isLoading: false});
+        break;
+      case 500:
+        this.clearForm();
+        this.setState({message: 'Service error\nPlease try again', isLoading: false});
+        break;
+      case 200:
+        this.setState({message: 'Request has been sent', isLoading: false});
+        setTimeout(() => {
+          this.setState({message: ''});
+        }, 500);
+        break;
+    }
+  }
+
   onFind() {
-    // var socket = this.props.socket;
-    // socket.emit('login', {uname: this.state.uname, pass: this.state.pass});
+    this.socket.emit('add_friend', { uname: this.props.uname, fname: this.state.uname });
+
     this.setState({ isLoading: true });
-    // socket.on('login_status', function (userData) {
-    //   this.setState({ message: JSON.stringify(userData) });
-    // });
+
+    this.socket.on('add_friend_resp', this.addResp.bind(this));
   }
 
   render() {
@@ -55,6 +80,7 @@ export default class AddFriend extends Component {
           <Text style={styles.buttonText}>Find</Text>
         </TouchableHighlight>
         {loading}
+        <Text style={styles.description}>{this.state.message}</Text>
       </View>
     );
   }
