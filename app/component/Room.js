@@ -2,6 +2,7 @@
 
 import React, {Component} from 'react';
 import {
+  AsyncStorage,
   Platform,
   StyleSheet,
   Text,
@@ -11,6 +12,11 @@ import {
 import {GiftedChat, Actions, Bubble} from 'react-native-gifted-chat';
 import CustomActions from './CustomActions';
 import CustomView from './CustomView';
+import Store from 'react-native-store';
+
+const DB = {
+  chat: Store.model('chat')
+}
 
 const styles = StyleSheet.create({
   footerContainer: {
@@ -31,25 +37,26 @@ class Room extends Component {
     this.state = {
       messages: [],
       typingText: null,
-      isLoadingEarlier: false,
+      isLoadingEarlier: false
     };
 
-    this._isMounted = false;
-    this.onSend = this.onSend.bind(this);
-    this.onReceive = this.onReceive.bind(this);
-    this.renderCustomActions = this.renderCustomActions.bind(this);
-    this.renderBubble = this.renderBubble.bind(this);
-    this.onLoadEarlier = this.onLoadEarlier.bind(this);
+    DB.chat.find({
+      where: { roomId: this.props.roomId }
+    }).then(value => 
+      this.setState({
+        messages: value !== null ? value : []
+      })
+    );
 
-    this._isAlright = null;
-  }
-
-  componentWillMount() {
-    this._isMounted = true;
+    this.socket = this.props.socket;
   }
 
   componentWillUnmount() {
-    this._isMounted = false;
+    this.state.messages.forEach(val => {
+      let {_id, ...v} = val;
+      v.roomId = this.props.roomId;
+      DB.chat.add(v);
+    });
   }
 
   onLoadEarlier() {
@@ -73,14 +80,19 @@ class Room extends Component {
   }
 
   onSend(messages = []) {
-    this.setState((previousState) => {
-      return {
-        messages: GiftedChat.append(previousState.messages, messages),
-      };
+    messages.forEach(message => {
+      console.log(message)
+      this.socket.emit('send', {
+        senderID: this.props.userData.userId,
+        roomID: this.props.roomId,
+        content: message.text,
+        datetime: message.createdAt
+      });
     });
 
-    // for demo purpose
-    this.answerDemo(messages);
+    this.setState({
+      messages: GiftedChat.append(this.state.messages, messages),
+    });
   }
 
   answerDemo(messages) {
@@ -182,20 +194,22 @@ class Room extends Component {
   }
 
   render() {
+    this.onSend = this.onSend.bind(this)
+
     return (
       <GiftedChat
         messages={this.state.messages}
         onSend={this.onSend}
-        onLoadEarlier={this.onLoadEarlier}
+        onLoadEarlier={this.onLoadEarlier.bind(this)}
         isLoadingEarlier={this.state.isLoadingEarlier}
 
         user={{
           _id: 1, // sent messages should have same user._id
         }}
 
-        renderActions={this.renderCustomActions}
-        renderBubble={this.renderBubble}
-        renderCustomView={this.renderCustomView}
+        renderActions={this.renderCustomActions.bind(this)}
+        renderBubble={this.renderBubble.bind(this)}
+        renderCustomView={this.renderCustomView.bind(this)}
       />
     );
   }

@@ -53,7 +53,11 @@ export default class Dashboard extends Component {
     this.props.navigator.push({
       title: 'Room',
       component: Room,
-      passProps: {roomId: id}
+      passProps: {
+        userData: this.props.userData,
+        roomId: id, 
+        socket: this.socket
+      }
     });
   }
 
@@ -62,7 +66,10 @@ export default class Dashboard extends Component {
   }
 
   findFriendRoom(friendId, callback) {
-    // this.socket.emit('find_group')
+    this.socket.emit('chat', {
+      userId1: this.props.userData.userId,
+      userId2: friendId
+    });
   }
 
   render() {
