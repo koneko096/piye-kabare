@@ -18,8 +18,6 @@ import GroupList from './GroupList';
 import AddFriend from './AddFriend';
 import Room from './Room';
 
-import friends from '../data/friends';
-
 export default class Dashboard extends Component {
   constructor(props) {
     super(props)
@@ -33,7 +31,7 @@ export default class Dashboard extends Component {
 
   getGroup(resp) {
     if (typeof(resp) === 'object') {
-      let rooms = this.state.rooms;
+      let rooms = [];
       resp.map(function (el) {
         rooms.push({
           name: el.nameGroup,
@@ -44,9 +42,30 @@ export default class Dashboard extends Component {
     };
   }
 
+  addFriend() {
+    this.socket.emit('find_friend', {userID: this.props.userData.userId});
+  }
+
+  getFriend(resp) {
+    if (typeof(resp) === 'object') {
+      let friends = [];
+      resp.map(function (el) {
+        friends.push({
+          name: el.name,
+          id: el._id
+        });
+      });
+      this.setState({ friends: friends });
+    };
+  }
+
   componentWillMount() {
     this.socket.emit('findRoom', this.props.userData.userId);
+    this.socket.emit('find_friend', {userID: this.props.userData.userId});
+
+    this.socket.on('chat_resp', this.gotoRoom.bind(this));
     this.socket.on('findRoom_resp', this.getGroup.bind(this));
+    this.socket.on('find_friend_resp', this.getFriend.bind(this));
   }
 
   gotoRoom(id) {
@@ -62,10 +81,10 @@ export default class Dashboard extends Component {
   }
 
   gotoFriendRoom(id) {
-    this.findFriendRoom(id, this.gotoRoom);
+    this.findFriendRoom(id);
   }
 
-  findFriendRoom(friendId, callback) {
+  findFriendRoom(friendId) {
     this.socket.emit('chat', {
       userId1: this.props.userData.userId,
       userId2: friendId
@@ -84,7 +103,7 @@ export default class Dashboard extends Component {
         tabBarActiveTextColor='#48BBEC' 
         tabBarUnderlineStyle={{backgroundColor: '#48BBEC'}}>
         <ContactList 
-          dataSource={friends}
+          dataSource={this.state.friends}
           onClick={this.gotoFriendRoom.bind(this)}
           tabLabel="Friend List" />
         <GroupList 
@@ -95,6 +114,7 @@ export default class Dashboard extends Component {
           tabLabel="Room List" />
         <AddFriend 
           socket={this.socket}
+          onAdd={this.addFriend.bind(this)}
           uname={this.props.userData.username}
           tabLabel="Add Friend" />
       </ScrollableTabView>

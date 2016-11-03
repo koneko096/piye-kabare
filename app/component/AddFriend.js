@@ -15,12 +15,14 @@ import styles from '../style/FormStyles';
 export default class AddFriend extends Component {
   constructor(props) {
     super(props);
-    this.socket = this.props.socket;
     this.state = {
       uname: '',
       isLoading: false,
       message: ''
     };
+    
+    this.socket = this.props.socket;
+    this.socket.on('add_friend_resp', this.addResp.bind(this));
   }
 
   onUsernameChanged(ev) {
@@ -48,16 +50,14 @@ export default class AddFriend extends Component {
         setTimeout(() => {
           this.setState({message: ''});
         }, 500);
+        this.props.onAdd();
         break;
     }
   }
 
   onFind() {
     this.socket.emit('add_friend', { uname: this.props.uname, fname: this.state.uname });
-
     this.setState({ isLoading: true });
-
-    this.socket.on('add_friend_resp', this.addResp.bind(this));
   }
 
   render() {

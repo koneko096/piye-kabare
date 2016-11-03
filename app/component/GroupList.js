@@ -51,7 +51,6 @@ export default class GroupList extends Component {
   }
 
   onCreateGroup() {
-    console.log('kepetek')
     this.socket.emit('create', {
       nameGroup: this.state.gname,
       adminId: this.props.userData.userId

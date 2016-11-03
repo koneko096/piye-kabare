@@ -28,6 +28,11 @@ export default class Row extends Component {
   }
 
   render() {
+    let name = (
+        this.props.name !== undefined ?
+        this.props.name.toUpperCase() :
+        ''
+      );
     return (
       <TouchableHighlight
         onPress={this.onClick.bind(this)}
@@ -38,7 +43,7 @@ export default class Row extends Component {
             backgroundColor={'navajowhite'}
             color={'white'}
             size={40}
-            text={this.props.name.toUpperCase()}
+            text={name}
             single={false}
           />
           <Text style={styles.text}>

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 
 import {GiftedChat, Actions, Bubble} from 'react-native-gifted-chat';
+import ContactList from './ContactList';
 import CustomActions from './CustomActions';
 import CustomView from './CustomView';
 import Store from 'react-native-store';
@@ -36,6 +37,8 @@ class Room extends Component {
     super(props);
     this.state = {
       messages: [],
+      members: [],
+      newMessages: [],
       typingText: null,
       isLoadingEarlier: false
     };
@@ -49,41 +52,67 @@ class Room extends Component {
     );
 
     this.socket = this.props.socket;
+    this.socket.on('find_friend_resp', this.manageMember.bind(this, this.addMember.bind(this)));
+    this.socket.on('find_member_resp', this.manageMember.bind(this, this.kickMember.bind(this)));
+    this.socket.on('add_resp', console.log)
+    this.socket.on('kick_resp', console.log)
   }
 
   componentWillUnmount() {
-    this.state.messages.forEach(val => {
+    this.state.newMessages.forEach(val => {
       let {_id, ...v} = val;
       v.roomId = this.props.roomId;
       DB.chat.add(v);
     });
   }
 
-  onLoadEarlier() {
-    this.setState((previousState) => {
-      return {
-        isLoadingEarlier: true,
-      };
-    });
-
-    setTimeout(() => {
-      if (this._isMounted === true) {
-        this.setState((previousState) => {
-          return {
-            // messages: GiftedChat.prepend(previousState.messages, require('../data/old_messages.js')),
-            loadEarlier: false,
-            isLoadingEarlier: false,
-          };
+  getMember(resp, cb) {
+    let members = [];
+    if (typeof(resp) === 'object') {
+      resp.map(function (el) {
+        members.push({
+          name: el.name,
+          id: el._id
         });
-      }
-    }, 1000); // simulating network
+      });
+      this.setState({ members: members });
+    };
+    cb(members);
+  }
+
+  addMember(id) {
+    this.socket.emit('add', {
+      roomID: this.props.roomId,
+      userID: id
+    });
+    this.props.navigator.pop();
+  }
+
+  kickMember(id) {
+    this.socket.emit('kick', {
+      roomID: this.props.roomId,
+      userID: id
+    });
+    this.props.navigator.pop();
+  }
+
+  manageMember(callback, resp) {
+    this.getMember(resp, (members) => {
+      this.props.navigator.push({
+        title: 'Select',
+        component: ContactList,
+        passProps: {
+          dataSource: members,
+          onClick: callback.bind(this)
+        }
+      });
+    });
   }
 
   onSend(messages = []) {
     messages.forEach(message => {
-      console.log(message)
       this.socket.emit('send', {
-        senderID: this.props.userData.userId,
+        senderID: message.user._id,
         roomID: this.props.roomId,
         content: message.text,
         datetime: message.createdAt
@@ -92,45 +121,11 @@ class Room extends Component {
 
     this.setState({
       messages: GiftedChat.append(this.state.messages, messages),
+      newMessages: GiftedChat.append(this.state.newMessages, messages)
     });
   }
 
-  answerDemo(messages) {
-    if (messages.length > 0) {
-      if ((messages[0].image || messages[0].location) || !this._isAlright) {
-        this.setState((previousState) => {
-          return {
-            typingText: 'React Native is typing'
-          };
-        });
-      }
-    }
-
-    setTimeout(() => {
-      if (this._isMounted === true) {
-        if (messages.length > 0) {
-          if (messages[0].image) {
-            this.onReceive('Nice picture!');
-          } else if (messages[0].location) {
-            this.onReceive('My favorite place');
-          } else {
-            if (!this._isAlright) {
-              this._isAlright = true;
-              this.onReceive('Alright');
-            }
-          }
-        }
-      }
-
-      this.setState((previousState) => {
-        return {
-          typingText: null,
-        };
-      });
-    }, 1000);
-  }
-
-  onReceive(text) {
+  onReceive(message) {
     this.setState((previousState) => {
       return {
         messages: GiftedChat.append(previousState.messages, {
@@ -156,11 +151,11 @@ class Room extends Component {
       );
     }
     const options = {
-      'Action 1': (props) => {
-        alert('option 1');
+      'Add member': (props) => {
+        this.socket.emit('find_friend', {userID: this.props.userData.userId});
       },
-      'Action 2': (props) => {
-        alert('option 2');
+      'Remove member': (props) => {
+        this.socket.emit('find_member', {roomID: this.props.roomId});
       },
       'Cancel': () => {},
     };
@@ -200,11 +195,10 @@ class Room extends Component {
       <GiftedChat
         messages={this.state.messages}
         onSend={this.onSend}
-        onLoadEarlier={this.onLoadEarlier.bind(this)}
         isLoadingEarlier={this.state.isLoadingEarlier}
 
         user={{
-          _id: 1, // sent messages should have same user._id
+          _id: this.props.userData.userId  // sent messages should have same user._id
         }}
 
         renderActions={this.renderCustomActions.bind(this)}
