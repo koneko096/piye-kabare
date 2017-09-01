@@ -9,8 +9,12 @@ import {
   View
 } from 'react-native';
 
-window.navigator.userAgent = 'react-native';
-let io = require('socket.io-client/socket.io');
+if (!window.location) {
+    // App is running in simulator
+    window.navigator.userAgent = 'ReactNative';
+}
+
+const io = require('socket.io-client');
 
 import Dashboard from './Dashboard';
 import Login from './Login';
@@ -22,10 +26,10 @@ export default class Home extends Component {
       loggedIn: false
     };
     
-    this.socket = io.connect('http://192.168.1.15:8083', { 
+    this.socket = io('http://192.168.1.15:8083', { 
       jsonp: false,
       transports: ['websocket'],
-      autoConnect: true
+      // autoConnect: true
     });
   }
 
