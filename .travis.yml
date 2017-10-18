@@ -32,29 +32,6 @@ env:
   - ANDROID_BUILD_TOOLS=25.0.3
   - ADB_INSTALL_TIMEOUT=5 # minutes
 
-# android:
-#   components:
-#   - tools
-#   - platform-tools
-#   - build-tools-$ANDROID_BUILD_TOOLS
-#   - android-$ANDROID_API
-#   - android-$EMULATOR_API
-#   - extra-google-m2repository
-#   - extra-android-m2repository # for design library
-#   - addon-google_apis-google-25 # google play services
-#   - sys-img-armeabi-v7a-google_apis-$ANDROID_API
-#   - sys-img-armeabi-v7a-google_apis-$EMULATOR_API
-
-#   licenses:
-#   - android-sdk-preview-license-.+
-#   - android-sdk-license-.+
-#   - google-gdk-license-.+
-
-# - mkdir "$ANDROID_HOME/licenses" || true
-# - echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > "$ANDROID_HOME/licenses/android-sdk-license"
-# - echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
-# - openssl aes-256-cbc -K $encrypted_c0801aa05af4_key -iv $encrypted_c0801aa05af4_iv -in example_keystore.jks.enc -out example_keystore.jks -d
-
 before_install:
 # Download and unzip the Android SDK tools (if not already there thanks to the cache mechanism)
 - if test ! -e $HOME/android-sdk-dl/tools_r25.2.5-linux.zip ; then curl https://dl.google.com/android/repository/tools_r25.2.5-linux.zip > $HOME/android-sdk-dl/tools_r25.2.5-linux.zip ; fi
@@ -67,8 +44,8 @@ before_install:
 - echo y | $HOME/android-sdk/tools/bin/sdkmanager "build-tools;$ANDROID_BUILD_TOOLS" > /dev/null 2>&1
 - echo y | $HOME/android-sdk/tools/bin/sdkmanager "platforms;android-$ANDROID_API" > /dev/null 2>&1
 - echo y | $HOME/android-sdk/tools/bin/sdkmanager "extras;android;m2repository" > /dev/null 2>&1
-# - echo y | $HOME/android-sdk/tools/bin/sdkmanager "extras;google;google_play_services"
-# - echo y | $HOME/android-sdk/tools/bin/sdkmanager "extras;google;m2repository"
+- echo y | $HOME/android-sdk/tools/bin/sdkmanager "extras;google;google_play_services" > /dev/null 2>&1
+- echo y | $HOME/android-sdk/tools/bin/sdkmanager "extras;google;m2repository" > /dev/null 2>&1
 
 install:
 # Install node deps
@@ -82,25 +59,17 @@ install:
 - ./gradlew dependencies || true # DON'T ADD unless you are getting "Install missing components using SDK manager"
 # Source: https://medium.com/@oldergod/constraint-layout-and-circleci-travis-d50342696d2
 
-# before_script:
-# - android list target
-# - echo no | android create avd --force -n test
-# - emulator -avd test -no-skin -no-audio -no-window &
-# - android-wait-for-emulator
-# - adb shell input keyevent 82 &
-
 script:
-- "./gradlew assembleDebug"
+- "./gradlew assembleRelease"
 
 before_deploy:
-# - cp $TRAVIS_BUILD_DIR/example_keystore.jks $HOME
+- cp $TRAVIS_BUILD_DIR/example_keystore.jks $HOME
 - cd app/build/outputs/apk/
-# - jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore $HOME/example_keystore.jks -storepass $storepass -keypass $keypass app-release-unsigned.apk ExampleKeystoreAlias
+- jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore $HOME/example_keystore.jks -storepass $STOREPASS -keypass $KEYPASS app-release-unsigned.apk jks
 
 # Verification
-# - jarsigner -verify app-release-unsigned.apk
-# - "${ANDROID_HOME}/build-tools/24.0.2/zipalign -v 4 app-release-unsigned.apk PiyeKabare.apk"
-- mv *.apk PiyeKabare.apk
+- jarsigner -verify app-release-unsigned.apk
+- "${ANDROID_HOME}/build-tools/25.0.3/zipalign -v 4 app-release-unsigned.apk PiyeKabare.apk"
 
 deploy:
   provider: releases
