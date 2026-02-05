@@ -1,0 +1,91 @@
+name: Build Mobile Apps
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build Android Release
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: android/app/build/outputs/apk/release/*.apk
+
+#  build-ios:
+#    runs-on: macos-latest
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
+#
+#      - name: Set up Node.js
+#        uses: actions/setup-node@v4
+#        with:
+#          node-version: '22'
+#          cache: 'npm'
+#
+#      - name: Install dependencies
+#        run: npm install
+#
+#      - name: Install Pods
+#        run: |
+#          cd ios
+#          pod install
+#
+#      - name: Build iOS IPA
+#        run: |
+#          xcodebuild -workspace ios/PiyeKabare.xcworkspace \
+#            -scheme PiyeKabare \
+#            -archivePath ios/build/PiyeKabare.xcarchive \
+#            archive \
+#            CODE_SIGNING_ALLOWED=NO
+#
+#      - name: Export IPA
+#        run: |
+#          # Note: Exporting a real IPA requires a provisioning profile and certificate.
+#          # For CI verification without secrets, we often just archive or build the .app.
+#          # Here we'll try to build the .app bundle as a fallback if No-Sign IPA fails.
+#          xcodebuild -exportArchive \
+#            -archivePath ios/build/PiyeKabare.xcarchive \
+#            -exportPath ios/build/ipa \
+#            -exportOptionsPlist ios/exportOptions.plist \
+#            || echo "IPA export skipped (signing required)"
+#
+#      - name: Upload IPA/Archive
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: app-release-ios
+#          path: |
+#            ios/build/ipa/*.ipa
+#            ios/build/PiyeKabare.xcarchive
+
