@@ -54,10 +54,14 @@ react {
     autolinkLibrariesWithApp()
 }
 
+project.ext.react = [
+    enableHermes: true,
+]
+
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
  */
-def enableProguardInReleaseBuilds = false
+def enableProguardInReleaseBuilds = true
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
@@ -84,6 +88,9 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        ndk {
+            abiFilters 'arm64-v8a'  // Only 64-bit ARM (most devices)
+        }
     }
     signingConfigs {
         debug {
@@ -91,6 +98,12 @@ android {
             storePassword 'android'
             keyAlias 'androiddebugkey'
             keyPassword 'android'
+        }
+        release {
+            storeFile = file("../keystores/release-keystore.jks")
+            storePassword = project.property("KEYSTORE_PASSWORD")
+            keyAlias = project.property("KEYSTORE_KEY_ALIAS")
+            keyPassword = project.property("KEYSTORE_KEY_PASSWORD")
         }
     }
     buildTypes {
@@ -100,8 +113,9 @@ android {
         release {
             // Caution! In production, you need to generate your own keystore file.
             // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
+            shrinkResources enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
