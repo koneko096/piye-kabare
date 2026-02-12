@@ -17,12 +17,19 @@ const Dashboard = ({ socket, navigation, userData }) => {
   const [activeTab, setActiveTab] = useState(0);
 
   const getGroup = useCallback((resp) => {
-    if (typeof resp === 'object') {
-      let roomsList = resp.map(el => ({
-        name: el.nameGroup,
-        id: el._id
-      }));
-      setRooms(roomsList);
+    if (Array.isArray(resp)) {
+      const uniqueRooms = [];
+      const seenIds = new Set();
+      resp.forEach(el => {
+        if (el._id && !seenIds.has(el._id)) {
+          seenIds.add(el._id);
+          uniqueRooms.push({
+            name: el.nameGroup,
+            id: el._id
+          });
+        }
+      });
+      setRooms(uniqueRooms);
     }
   }, []);
 
@@ -36,37 +43,63 @@ const Dashboard = ({ socket, navigation, userData }) => {
     }
   }, []);
 
-  const gotoRoom = useCallback((id) => {
+  const gotoRoom = useCallback((room) => {
+    const roomId = room.id || room; // Handle both item object and bare ID from server resp
+    const name = room.name || '';
+
     navigation.navigate('Room', {
       userData: userData,
-      roomId: id,
-      socket: socket
+      roomId: roomId,
+      name: name,
+      socket: socket,
+      friends: friends // Pass the loaded friend list
     });
-  }, [navigation, userData, socket]);
+  }, [navigation, userData, socket, friends]);
 
-  const gotoFriendRoom = (id) => {
-    socket.emit('chat', {
-      userId1: userData.userId,
-      userId2: id
-    });
-  };
+  const gotoFriendRoom = useCallback((friend) => {
+    const id = friend.id || friend;
+    const name = friend.name || 'Chat';
+    console.log('Initiating chat with friend:', id);
+    if (socket && userData) {
+      socket.emit('chat', {
+        userId1: userData.userId,
+        userId2: id,
+        nameGroup: name // Required by the server to create a DM room
+      });
+    } else {
+      console.warn('Socket or userData missing in gotoFriendRoom');
+    }
+  }, [socket, userData]);
 
   useEffect(() => {
     if (socket) {
       socket.emit('findRoom', userData.userId);
       socket.emit('find_friend', { userID: userData.userId });
+    }
+  }, [socket, userData.userId]);
 
+  const handleCreateResp = useCallback((resp) => {
+    if (typeof resp === 'string') {
+      // Re-fetch rooms to ensure we have the latest server state and prevent duplicates
+      socket.emit('findRoom', userData.userId);
+    }
+  }, [socket, userData.userId]);
+
+  useEffect(() => {
+    if (socket) {
       socket.on('chat_resp', gotoRoom);
       socket.on('findRoom_resp', getGroup);
       socket.on('find_friend_resp', getFriend);
+      socket.on('create_resp', handleCreateResp);
 
       return () => {
         socket.off('chat_resp', gotoRoom);
         socket.off('findRoom_resp', getGroup);
         socket.off('find_friend_resp', getFriend);
+        socket.off('create_resp', handleCreateResp);
       };
     }
-  }, [socket, userData.userId, gotoRoom, getGroup, getFriend]);
+  }, [socket, gotoRoom, getGroup, getFriend, handleCreateResp]);
 
   const renderTabContent = () => {
     switch (activeTab) {

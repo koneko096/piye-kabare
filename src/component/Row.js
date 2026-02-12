@@ -6,11 +6,11 @@ import {
 } from 'react-native';
 
 const Row = ({ name, id, onClick }) => {
-  const initials = name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '';
+  const initials = name ? name.trim().split(/\s+/).map(n => n[0]).join('').toUpperCase().slice(0, 2) : '';
 
   return (
     <TouchableHighlight
-      onPress={() => onClick(id)}
+      onPress={() => onClick()}
       underlayColor="#C3C3C3"
     >
       <View style={styles.container}>

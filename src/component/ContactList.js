@@ -1,16 +1,25 @@
 import { View, FlatList, StyleSheet } from 'react-native';
 import Row from './Row';
 
-const ContactList = ({ dataSource, onClick }) => {
+const ContactList = (props) => {
+  // Extract dataSource and onClick from direct props or route.params
+  const dataSource = props.dataSource || props.route?.params?.dataSource;
+  const onClick = props.onClick || props.route?.params?.onClick;
+
   const renderItem = ({ item }) => (
-    <Row onClick={() => onClick(item.id)} {...item} />
+    <Row
+      onClick={() => {
+        if (onClick) onClick(item);
+      }}
+      {...item}
+    />
   );
 
   return (
     <FlatList
-      data={dataSource}
+      data={dataSource || []}
       renderItem={renderItem}
-      keyExtractor={(item) => item.id.toString()}
+      keyExtractor={(item, index) => (item.id || item._id || index).toString()}
       ItemSeparatorComponent={() => <View style={styles.separator} />}
     />
   );

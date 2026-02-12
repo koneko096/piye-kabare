@@ -15,7 +15,7 @@ const App = () => {
 
     useEffect(() => {
         // Initialize socket connection
-        initSocket('http://192.168.1.15:8083');
+        initSocket('http://localhost:8083');
     }, [initSocket]);
 
     return (

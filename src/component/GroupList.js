@@ -12,32 +12,13 @@ const GroupList = ({ socket, userData, dataSource, onClick }) => {
     setGroups(dataSource);
   }, [dataSource]);
 
-  const newGroup = useCallback((resp) => {
-    if (resp === 500) {
-      setMessage('Service error\nPlease try again');
-      setGname('');
-    } else {
-      const newGroups = [...groups, { id: resp, name: gname }];
-      setGroups(newGroups);
-      setGname('');
-    }
-  }, [groups, gname]);
-
-  useEffect(() => {
-    if (socket) {
-      socket.on('create_resp', newGroup);
-      return () => {
-        socket.off('create_resp', newGroup);
-      };
-    }
-  }, [socket, newGroup]);
-
   const onCreateGroup = () => {
     if (!socket || !gname) return;
     socket.emit('create', {
       nameGroup: gname,
       adminId: userData.userId
     });
+    setGname('');
   };
 
   return (
