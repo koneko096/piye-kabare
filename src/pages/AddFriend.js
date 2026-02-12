@@ -2,13 +2,19 @@ import { useState, useEffect } from 'react';
 import {
   ActivityIndicator,
   Text,
-  TextInput,
-  TouchableHighlight,
   View
 } from 'react-native';
 import styles from '../style/FormStyles';
+import CustomButton from '../widgets/CustomButton';
+import FormInput from '../widgets/FormInput';
+import socketService from '../utils/socketService';
 
-const AddFriend = ({ socket, onAdd, uname }) => {
+import useStore from '../store/useStore';
+
+const AddFriend = ({ onAdd }) => {
+  const socket = useStore((state) => state.socket);
+  const uname = useStore((state) => state.userData?.username);
+  const fetchData = useStore((state) => state.fetchData);
   const [friendUname, setFriendUname] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -34,42 +40,37 @@ const AddFriend = ({ socket, onAdd, uname }) => {
           setTimeout(() => {
             setMessage('');
           }, 1000);
-          onAdd();
+          onAdd(); // This is fetchData passed from Dashboard
           break;
       }
     };
 
     if (socket) {
-      socket.on('add_friend_resp', handleAddResp);
+      socketService.on(socket, 'add_friend_resp', handleAddResp);
       return () => {
-        socket.off('add_friend_resp', handleAddResp);
+        socketService.off(socket, 'add_friend_resp', handleAddResp);
       };
     }
   }, [socket, onAdd]);
 
   const onFind = () => {
     if (!socket) return;
-    socket.emit('add_friend', { uname: uname, fname: friendUname });
+    socketService.emit(socket, 'add_friend', { uname: uname, fname: friendUname });
     setIsLoading(true);
   };
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.textInput}
+      <FormInput
         value={friendUname}
         onChangeText={setFriendUname}
-        underlineColorAndroid="transparent"
         placeholder="Username"
-        placeholderTextColor="#888888"
       />
-      <TouchableHighlight
-        style={styles.button}
+      <CustomButton
+        title="Find"
         onPress={onFind}
         underlayColor="#1219FF"
-      >
-        <Text style={styles.buttonText}>Find</Text>
-      </TouchableHighlight>
+      />
       {isLoading ? (
         <ActivityIndicator style={styles.loading} size="large" />
       ) : (
