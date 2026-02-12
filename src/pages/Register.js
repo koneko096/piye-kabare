@@ -2,11 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   ActivityIndicator,
   Text,
-  TextInput,
-  TouchableHighlight,
   View
 } from 'react-native';
 import styles from '../style/FormStyles';
+import CustomButton from '../widgets/CustomButton';
+import FormInput from '../widgets/FormInput';
+import socketService from '../utils/socketService';
 
 const Register = ({ route, navigation }) => {
   const { socket, justLoggedIn } = route.params;
@@ -37,9 +38,9 @@ const Register = ({ route, navigation }) => {
 
   useEffect(() => {
     if (socket) {
-      socket.on('register_status', registerResp);
+      socketService.on(socket, 'register_status', registerResp);
       return () => {
-        socket.off('register_status', registerResp);
+        socketService.off(socket, 'register_status', registerResp);
       };
     }
   }, [socket, registerResp]);
@@ -50,7 +51,7 @@ const Register = ({ route, navigation }) => {
       return;
     }
     setIsLoading(true);
-    socket.emit('register', {
+    socketService.emit(socket, 'register', {
       name: name,
       username: uname,
       password: pass
@@ -59,47 +60,33 @@ const Register = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.textInput}
+      <FormInput
         value={name}
         onChangeText={setName}
-        underlineColorAndroid="transparent"
         placeholder="Full Name"
-        placeholderTextColor="#888888"
       />
-      <TextInput
-        style={styles.textInput}
+      <FormInput
         value={uname}
         onChangeText={setUname}
-        underlineColorAndroid="transparent"
         placeholder="Username"
-        placeholderTextColor="#888888"
       />
-      <TextInput
+      <FormInput
         secureTextEntry={true}
-        style={styles.textInput}
         value={pass}
         onChangeText={setPass}
-        underlineColorAndroid="transparent"
         placeholder="Password"
-        placeholderTextColor="#888888"
       />
-      <TextInput
+      <FormInput
         secureTextEntry={true}
-        style={styles.textInput}
         value={pass2}
         onChangeText={setPass2}
-        underlineColorAndroid="transparent"
         placeholder="Confirm password"
-        placeholderTextColor="#888888"
       />
-      <TouchableHighlight
-        style={styles.button}
+      <CustomButton
+        title="Register"
         onPress={onRegister}
         underlayColor="#1219FF"
-      >
-        <Text style={styles.buttonText}>Register</Text>
-      </TouchableHighlight>
+      />
       {isLoading ? (
         <ActivityIndicator style={styles.loading} size="large" />
       ) : (

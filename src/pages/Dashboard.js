@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
 import {
   Platform,
   StyleSheet,
   Text,
   View,
-  TouchableOpacity,
 } from 'react-native';
 
-import ContactList from './ContactList';
-import GroupList from './GroupList';
+import ContactList from '../widgets/ContactList';
+import GroupList from '../widgets/GroupList';
 import AddFriend from './AddFriend';
+import TabItem from '../widgets/TabItem';
+import socketService from '../utils/socketService';
 
 const Dashboard = ({ socket, navigation, userData }) => {
   const [rooms, setRooms] = useState([]);
@@ -61,7 +61,7 @@ const Dashboard = ({ socket, navigation, userData }) => {
     const name = friend.name || 'Chat';
     console.log('Initiating chat with friend:', id);
     if (socket && userData) {
-      socket.emit('chat', {
+      socketService.emit(socket, 'chat', {
         userId1: userData.userId,
         userId2: id,
         nameGroup: name // Required by the server to create a DM room
@@ -71,35 +71,38 @@ const Dashboard = ({ socket, navigation, userData }) => {
     }
   }, [socket, userData]);
 
+  const onGoToRoom = useCallback((room) => {
+    gotoRoom(room);
+  }, [gotoRoom]);
+
   useEffect(() => {
     if (socket) {
-      socket.emit('findRoom', userData.userId);
-      socket.emit('find_friend', { userID: userData.userId });
+      socketService.emit(socket, 'findRoom', userData.userId);
+      socketService.emit(socket, 'find_friend', { userID: userData.userId });
     }
   }, [socket, userData.userId]);
 
   const handleCreateResp = useCallback((resp) => {
     if (typeof resp === 'string') {
-      // Re-fetch rooms to ensure we have the latest server state and prevent duplicates
-      socket.emit('findRoom', userData.userId);
+      socketService.emit(socket, 'findRoom', userData.userId);
     }
   }, [socket, userData.userId]);
 
   useEffect(() => {
     if (socket) {
-      socket.on('chat_resp', gotoRoom);
-      socket.on('findRoom_resp', getGroup);
-      socket.on('find_friend_resp', getFriend);
-      socket.on('create_resp', handleCreateResp);
+      socketService.on(socket, 'chat_resp', onGoToRoom);
+      socketService.on(socket, 'findRoom_resp', getGroup);
+      socketService.on(socket, 'find_friend_resp', getFriend);
+      socketService.on(socket, 'create_resp', handleCreateResp);
 
       return () => {
-        socket.off('chat_resp', gotoRoom);
-        socket.off('findRoom_resp', getGroup);
-        socket.off('find_friend_resp', getFriend);
-        socket.off('create_resp', handleCreateResp);
+        socketService.off(socket, 'chat_resp', onGoToRoom);
+        socketService.off(socket, 'findRoom_resp', getGroup);
+        socketService.off(socket, 'find_friend_resp', getFriend);
+        socketService.off(socket, 'create_resp', handleCreateResp);
       };
     }
-  }, [socket, gotoRoom, getGroup, getFriend, handleCreateResp]);
+  }, [socket, onGoToRoom, getGroup, getFriend, handleCreateResp]);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -135,15 +138,9 @@ const Dashboard = ({ socket, navigation, userData }) => {
   return (
     <View style={styles.container}>
       <View style={styles.tabBar}>
-        <TouchableOpacity style={[styles.tab, activeTab === 0 && styles.activeTab]} onPress={() => setActiveTab(0)}>
-          <Text style={[styles.tabText, activeTab === 0 && styles.activeTabText]}>Friends</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.tab, activeTab === 1 && styles.activeTab]} onPress={() => setActiveTab(1)}>
-          <Text style={[styles.tabText, activeTab === 1 && styles.activeTabText]}>Rooms</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.tab, activeTab === 2 && styles.activeTab]} onPress={() => setActiveTab(2)}>
-          <Text style={[styles.tabText, activeTab === 2 && styles.activeTabText]}>Add</Text>
-        </TouchableOpacity>
+        <TabItem title="Friends" isActive={activeTab === 0} onPress={() => setActiveTab(0)} />
+        <TabItem title="Rooms" isActive={activeTab === 1} onPress={() => setActiveTab(1)} />
+        <TabItem title="Add" isActive={activeTab === 2} onPress={() => setActiveTab(2)} />
       </View>
       <View style={styles.content}>
         {renderTabContent()}

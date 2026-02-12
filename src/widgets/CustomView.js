@@ -61,9 +61,3 @@ CustomView.defaultProps = {
   containerStyle: {},
   mapViewStyle: {},
 };
-
-CustomView.propTypes = {
-  currentMessage: React.PropTypes.object,
-  containerStyle: View.propTypes.style,
-  mapViewStyle: View.propTypes.style,
-};

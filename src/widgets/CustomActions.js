@@ -7,6 +7,7 @@ import {
   Text,
 } from 'react-native';
 
+import { Actions } from 'react-native-gifted-chat';
 import CameraRollPicker from 'react-native-camera-roll-picker';
 import NavBar, { NavButton, NavButtonText, NavTitle } from 'react-native-nav';
 
@@ -30,7 +31,7 @@ export default class CustomActions extends React.Component {
   }
 
   setModalVisible(visible = false) {
-    this.setState({modalVisible: visible});
+    this.setState({ modalVisible: visible });
   }
 
   onActionsPress() {
@@ -40,28 +41,28 @@ export default class CustomActions extends React.Component {
       options,
       cancelButtonIndex,
     },
-    (buttonIndex) => {
-      switch (buttonIndex) {
-        case 0:
-          this.setModalVisible(true);
-          break;
-        case 1:
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              this.props.onSend({
-                location: {
-                  latitude: position.coords.latitude,
-                  longitude: position.coords.longitude,
-                },
-              });
-            },
-            (error) => alert(error.message),
-            {enableHighAccuracy: true, timeout: 20000, maximumAge: 1000}
-          );
-          break;
-        default:
-      }
-    });
+      (buttonIndex) => {
+        switch (buttonIndex) {
+          case 0:
+            this.setModalVisible(true);
+            break;
+          case 1:
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                this.props.onSend({
+                  location: {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                  },
+                });
+              },
+              (error) => alert(error.message),
+              { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
+            );
+            break;
+          default:
+        }
+      });
   }
 
   selectImages(images) {
@@ -185,7 +186,7 @@ CustomActions.contextTypes = {
 };
 
 CustomActions.defaultProps = {
-  onSend: () => {},
+  onSend: () => { },
   options: {},
   icon: null,
   containerStyle: {},

@@ -1,7 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
-import { View, TextInput, StyleSheet, Text, TouchableHighlight } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, StyleSheet, Text } from 'react-native';
 import ContactList from './ContactList';
 import FormStyles from '../style/FormStyles';
+import FormInput from './FormInput';
+import CustomButton from './CustomButton';
+import socketService from '../utils/socketService';
 
 const GroupList = ({ socket, userData, dataSource, onClick }) => {
   const [message, setMessage] = useState('');
@@ -14,7 +17,7 @@ const GroupList = ({ socket, userData, dataSource, onClick }) => {
 
   const onCreateGroup = () => {
     if (!socket || !gname) return;
-    socket.emit('create', {
+    socketService.emit(socket, 'create', {
       nameGroup: gname,
       adminId: userData.userId
     });
@@ -27,21 +30,16 @@ const GroupList = ({ socket, userData, dataSource, onClick }) => {
         <Text style={styles.labelText}>New Group</Text>
       </View>
       <View style={styles.inputContainer}>
-        <TextInput
-          style={FormStyles.textInput}
+        <FormInput
           value={gname}
           onChangeText={setGname}
-          underlineColorAndroid="transparent"
           placeholder="Group name"
-          placeholderTextColor="#888888"
         />
-        <TouchableHighlight
-          style={FormStyles.button}
+        <CustomButton
+          title="+"
           onPress={onCreateGroup}
           underlayColor="#1219FF"
-        >
-          <Text style={FormStyles.buttonText}>+</Text>
-        </TouchableHighlight>
+        />
       </View>
       {message !== '' && (
         <Text style={FormStyles.description}>{message}</Text>

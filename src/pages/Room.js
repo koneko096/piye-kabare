@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as GiftedChatModule from 'react-native-gifted-chat';
 import useStore from '../store/useStore';
+import storage from '../utils/storage';
+import { getAvatarUrl } from '../utils/avatar';
+import socketService from '../utils/socketService';
 
 const { GiftedChat, Actions, Bubble } = GiftedChatModule;
 
@@ -52,13 +54,9 @@ const Room = ({ route, navigation }) => {
 
   useEffect(() => {
     const loadMessages = async () => {
-      try {
-        const storedMessages = await AsyncStorage.getItem(STORAGE_KEY);
-        if (storedMessages) {
-          setMessages(JSON.parse(storedMessages));
-        }
-      } catch (e) {
-        console.error('Failed to load messages', e);
+      const storedMessages = await storage.get(STORAGE_KEY);
+      if (storedMessages) {
+        setMessages(storedMessages);
       }
     };
     loadMessages();
@@ -72,7 +70,6 @@ const Room = ({ route, navigation }) => {
           navigation.pop();
         } else {
           console.error('Failed to add member, error code:', resp);
-          // Show error message logic could go here
         }
       };
 
@@ -85,13 +82,11 @@ const Room = ({ route, navigation }) => {
         }
       };
 
-      socket.on('add_resp', handleAddResp);
-      socket.on('kick_resp', handleKickResp);
+      socketService.on(socket, 'add_resp', handleAddResp);
+      socketService.on(socket, 'kick_resp', handleKickResp);
 
-      // ADDED: Listener for incoming messages
-      socket.on('receive', (resp) => {
+      socketService.on(socket, 'receive', (resp) => {
         if (resp.roomID?.toString() === roomId?.toString()) {
-          // Use name from route.params if it's a DM, otherwise fallback
           const senderName = (resp.senderID !== userData.userId && name) ? name : 'Friend';
           const newMessage = {
             _id: Math.random().toString(36).substring(7),
@@ -100,7 +95,7 @@ const Room = ({ route, navigation }) => {
             user: {
               _id: resp.senderID,
               name: senderName,
-              avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=random&color=fff&size=128`,
+              avatar: getAvatarUrl(senderName, 'random', 'fff'),
             },
           };
           setMessages(prev => GiftedChat.append(prev, [newMessage]));
@@ -108,12 +103,12 @@ const Room = ({ route, navigation }) => {
       });
 
       return () => {
-        socket.off('add_resp', handleAddResp);
-        socket.off('kick_resp', handleKickResp);
-        socket.off('receive');
+        socketService.off(socket, 'add_resp', handleAddResp);
+        socketService.off(socket, 'kick_resp', handleKickResp);
+        socketService.off(socket, 'receive');
       };
     }
-  }, [socket, roomId, navigation]);
+  }, [socket, roomId, navigation, userData, name]);
 
   useEffect(() => {
     return () => {
@@ -124,14 +119,9 @@ const Room = ({ route, navigation }) => {
   }, [roomId]);
 
   const saveMessages = async (newMsgs) => {
-    try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      let allMessages = stored ? JSON.parse(stored) : [];
-      allMessages = GiftedChat.append(allMessages, newMsgs);
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(allMessages));
-    } catch (e) {
-      console.error('Failed to save messages', e);
-    }
+    const stored = await storage.get(STORAGE_KEY) || [];
+    const allMessages = GiftedChat.append(stored, newMsgs);
+    await storage.set(STORAGE_KEY, allMessages);
   };
 
   const getMember = (resp, cb) => {
@@ -150,7 +140,7 @@ const Room = ({ route, navigation }) => {
 
   const addMember = (item) => {
     const id = item.id || item;
-    socket.emit('add', {
+    socketService.emit(socket, 'add', {
       roomId: roomId,
       userId: id
     });
@@ -158,7 +148,7 @@ const Room = ({ route, navigation }) => {
 
   const kickMember = (item) => {
     const id = item.id || item;
-    socket.emit('kick', {
+    socketService.emit(socket, 'kick', {
       roomId: roomId,
       userId: id
     });
@@ -166,7 +156,7 @@ const Room = ({ route, navigation }) => {
 
   const onSend = (newMsgs = []) => {
     newMsgs.forEach(message => {
-      socket.emit('send', {
+      socketService.emit(socket, 'send', {
         senderID: message.user._id,
         roomID: roomId,
         content: message.text,
@@ -179,7 +169,7 @@ const Room = ({ route, navigation }) => {
       user: {
         ...m.user,
         name: userData.username || 'Me',
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.username || 'Me')}&background=0D8ABC&color=fff&size=128`,
+        avatar: getAvatarUrl(userData.username || 'Me', '0D8ABC', 'fff'),
       }
     }));
 
@@ -198,8 +188,8 @@ const Room = ({ route, navigation }) => {
         }
       },
       'Remove member': () => {
-        socket.emit('find_member', { roomID: roomId });
-        socket.once('find_member_resp', (resp) => {
+        socketService.emit(socket, 'find_member', { roomID: roomId });
+        socketService.on(socket, 'find_member_resp', (resp) => {
           getMember(resp, (membersList) => {
             navigation.navigate('ContactList', {
               dataSource: membersList,
@@ -255,7 +245,7 @@ const Room = ({ route, navigation }) => {
       user={{
         _id: userData.userId,
         name: userData.username || 'Me',
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.username || 'Me')}&background=0D8ABC&color=fff`,
+        avatar: getAvatarUrl(userData.username || 'Me', '0D8ABC', 'fff'),
       }}
       showUserAvatar={true}
       showAvatarForEveryMessage={true}

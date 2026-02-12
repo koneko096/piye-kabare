@@ -3,10 +3,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import useStore from './store/useStore';
 
-import Home from './component/Home';
-import Register from './component/Register';
-import ContactList from './component/ContactList';
-import Room from './component/Room';
+import Home from './pages/Home';
+import Register from './pages/Register';
+import ContactList from './widgets/ContactList';
+import Room from './pages/Room';
 
 const Stack = createNativeStackNavigator();
 

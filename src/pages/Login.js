@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
 import {
   ActivityIndicator,
   Text,
-  TextInput,
-  TouchableHighlight,
   View
 } from 'react-native';
 import styles from '../style/FormStyles';
+import CustomButton from '../widgets/CustomButton';
+import FormInput from '../widgets/FormInput';
+import socketService from '../utils/socketService';
 
 const Login = ({ socket, navigation, justLoggedIn }) => {
   const [uname, setUname] = useState('');
@@ -28,9 +28,9 @@ const Login = ({ socket, navigation, justLoggedIn }) => {
 
   useEffect(() => {
     if (socket) {
-      socket.on('login_resp', updateUserData);
+      socketService.on(socket, 'login_resp', updateUserData);
       return () => {
-        socket.off('login_resp', updateUserData);
+        socketService.off(socket, 'login_resp', updateUserData);
       };
     }
   }, [socket, updateUserData]);
@@ -38,7 +38,7 @@ const Login = ({ socket, navigation, justLoggedIn }) => {
   const onLogin = () => {
     if (!socket) return;
     setIsLoading(true);
-    socket.emit('login', { username: uname, password: pass });
+    socketService.emit(socket, 'login', { username: uname, password: pass });
   };
 
   const onRegister = () => {
@@ -50,37 +50,26 @@ const Login = ({ socket, navigation, justLoggedIn }) => {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.textInput}
+      <FormInput
         value={uname}
         onChangeText={setUname}
-        underlineColorAndroid="transparent"
         placeholder="Username"
-        placeholderTextColor="#888888"
       />
-      <TextInput
+      <FormInput
         secureTextEntry={true}
-        style={styles.textInput}
         value={pass}
         onChangeText={setPass}
-        underlineColorAndroid="transparent"
         placeholder="Password"
-        placeholderTextColor="#888888"
       />
-      <TouchableHighlight
-        style={styles.button}
+      <CustomButton
+        title="Login"
         onPress={onLogin}
-        underlayColor="#99d9f4"
-      >
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableHighlight>
-      <TouchableHighlight
-        style={styles.button}
+      />
+      <CustomButton
+        title="Register"
         onPress={onRegister}
         underlayColor="#1219FF"
-      >
-        <Text style={styles.buttonText}>Register</Text>
-      </TouchableHighlight>
+      />
       {isLoading ? (
         <ActivityIndicator style={styles.loading} size="large" />
       ) : (
