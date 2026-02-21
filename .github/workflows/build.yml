@@ -61,34 +61,33 @@ jobs:
             android/app/build/outputs/apk/release/*
           retention-days: 90
 
-#  build-ios:
-#    runs-on: macos-latest
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v4
-#
-#      - name: Set up Node.js
-#        uses: actions/setup-node@v4
-#        with:
-#          node-version: '22'
-#          cache: 'npm'
-#
-#      - name: Install dependencies
-#        run: npm install
-#
-#      - name: Install Pods
-#        run: |
-#          cd ios
-#          pod install
-#
-#      - name: Build iOS IPA
-#        run: |
-#          xcodebuild -workspace ios/PiyeKabare.xcworkspace \
-#            -scheme PiyeKabare \
-#            -archivePath ios/build/PiyeKabare.xcarchive \
-#            archive \
-#            CODE_SIGNING_ALLOWED=NO
-#
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Pods
+        run: |
+          cd ios
+          pod install
+
+      - name: Build iOS Archive
+        run: |
+          xcodebuild -workspace ios/PiyeKabare.xcworkspace \
+            -scheme PiyeKabare \
+            -archivePath ios/build/PiyeKabare.xcarchive \
+            archive CODE_SIGNING_ALLOWED=NO
+
 #      - name: Export IPA
 #        run: |
 #          # Note: Exporting a real IPA requires a provisioning profile and certificate.
@@ -99,12 +98,12 @@ jobs:
 #            -exportPath ios/build/ipa \
 #            -exportOptionsPlist ios/exportOptions.plist \
 #            || echo "IPA export skipped (signing required)"
-#
-#      - name: Upload IPA/Archive
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: app-release-ios
-#          path: |
-#            ios/build/ipa/*.ipa
-#            ios/build/PiyeKabare.xcarchive
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-ios
+          path: |
+            ios/build/PiyeKabare.xcarchive
+#           ios/build/ipa/*.ipa
 
